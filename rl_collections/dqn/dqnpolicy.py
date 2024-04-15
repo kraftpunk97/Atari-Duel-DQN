@@ -2,10 +2,10 @@ import random
 import torch
 from collections import deque
 import gymnasium as gym
-#from qnetwork import QNetwork
-#from utils import preprocessing
-from rl_collections.dqn.qnetwork import QNetwork
-from rl_collections.dqn.utils import preprocessing
+from qnetwork import QNetwork
+from utils import preprocessing
+#from rl_collections.dqn.qnetwork import QNetwork
+#rom rl_collections.dqn.utils import preprocessing
 
 
 class DQNPolicy:
@@ -16,6 +16,7 @@ class DQNPolicy:
                        else "cpu")
         print(f"Using device: {self.device}")
         self.model = QNetwork(num_actions, device=self.device)
+        self.model.to(self.device)
         self.num_actions = num_actions
         self.epsilon = 1  # 1 -> 0.1 over 1_000_000 frames
         self.replay_memory_maxlen = 1_000_000
