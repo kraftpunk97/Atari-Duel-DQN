@@ -1,12 +1,17 @@
+from pathlib import Path
 import random
 import torch
-from collections import deque
+import logging
 import gymnasium as gym
+from datetime import datetime
+from collections import deque
 from qnetwork import QNetwork
 from utils import preprocessing
 #from rl_collections.dqn.qnetwork import QNetwork
-#rom rl_collections.dqn.utils import preprocessing
+#from rl_collections.dqn.utils import preprocessing
 
+logging.basicConfig(filename=f"DQN-{datetime.now()}.log", level=logging.INFO)
+Path("models/").mkdir(parents=True, exist_ok=True)
 
 class DQNPolicy:
     def __init__(self, num_actions: int, device=None):
@@ -57,7 +62,8 @@ class DQNPolicy:
         self.current_state = first_state
 
         terminated = False
-        loss = []
+        epsd_loss = []
+        epsd_reward = 0
         while not terminated:
 
             # Implement epsilon-greedy policy with linear annealing of epsilon
@@ -90,11 +96,12 @@ class DQNPolicy:
             preprocessed_fb = preprocessing(self.framebuffer)
             next_state = torch.stack([torch.from_numpy(frame).type(torch.float32)
                                       for frame in preprocessed_fb])
-
+            epsd_reward += running_reward
             # Store (sequence(t), action(t), sequence(t+1), reward(t), terminated(t))
             experience_tuple = (self.current_state, action, running_reward, next_state, terminated)
             self.current_state = next_state
             self.replay_memory.append(experience_tuple)
+
 
             # Sample random mini-batches of experience_tuples from replay_memory
             minibatch_size = min(self.minibatch_size, len(self.replay_memory))
@@ -106,16 +113,22 @@ class DQNPolicy:
             state_minibatch = torch.stack([that_state for (that_state, _, _, _, _) in exp_minibatch], dim=0)
             action_minibatch = [that_action for (_, that_action, _, _, _) in exp_minibatch]
 
-            # Perform gradient descent step on (y - self.model(self.current_state)[action]^2
-            loss.append(self.model.optimize(minibatch=(state_minibatch, action_minibatch), y=y))
+            # Perform gradient descent step on (y - self.model(self.current_state)[action])^2
+            epsd_loss.append(self.model.optimize(minibatch=(state_minibatch, action_minibatch), y=y))
 
-        epsd_loss = sum(loss) / len(loss)
-        print(f'Episode loss: {epsd_loss}')
+        epsd_loss = sum(epsd_loss) / len(epsd_loss)
+        return epsd_loss, epsd_reward
 
 
 def main():
     policy = DQNPolicy(6)
-    policy.episode()
+    for eps_num in range(10000):
+        epsd_loss, epsd_reward = policy.episode()
+        if eps_num % 10 == 0:
+            logging.info(f"{datetime.now()} - Episode {eps_num} loss: {epsd_loss}; Reward: {epsd_reward}")
+        if eps_num % 100 == 0:
+            torch.save(policy,f"models/{datetime.now()}")
+    #print(len(policy.replay_memory))
 
 
 if __name__ == '__main__':

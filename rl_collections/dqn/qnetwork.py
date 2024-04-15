@@ -6,10 +6,9 @@ import torch.optim as optim
 
 
 class QNetwork(nn.Module):
-    def __init__(self, num_actions: int, lr: float = 0.001, *, device: str = "cpu"):
-        super().__init__()  # Calling the superclass constructor
+    def __init__(self, num_actions: int, lr: float = 0.0001, *, device: str = "cpu"):
+        super(QNetwork, self).__init__()  # Calling the superclass constructor
         self.device = device
-        print(f'Device: {self.device}')
         self.conv1 = nn.Conv2d(in_channels=4,
                                out_channels=16,
                                kernel_size=(8, 8),
