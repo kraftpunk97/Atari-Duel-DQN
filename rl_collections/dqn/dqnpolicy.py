@@ -14,6 +14,8 @@ from utils import preprocessing as _preprocessing
 envname = 'ALE/Pong-v5'
 saved_policies_maxlen = 20
 
+logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
+                    level=logging.INFO)
 
 class DQNPolicy:
     def __init__(self, env_name=envname, device=None):
@@ -67,8 +69,6 @@ class DQNPolicy:
         return action
 
     def train(self, num_episodes: int):
-        logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
-                            level=logging.INFO)
         Path("models/").mkdir(parents=True, exist_ok=True)
         running_rewards = deque(maxlen=25)
         saved_policies = deque(maxlen=saved_policies_maxlen)
@@ -78,7 +78,7 @@ class DQNPolicy:
 
             if eps_num % 25 == 0:
                 mean_reward = sum(running_rewards) / len(running_rewards)
-                logging.info(f"{datetime.now()} - Episode {eps_num} loss: {epsd_loss}; Reward: {mean_reward}")
+                logging.info(f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon};  loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
         logging.info(f"{datetime.now()} - Training complete")
         self.env.close()
@@ -139,7 +139,7 @@ class DQNPolicy:
             epsd_loss.append(loss)
 
             # Regularly updating the target model
-            if self.framectr % 10000 == 0:
+            if self.framectr % 100 == 0:
                 self.target_model.load_state_dict(self.active_model.state_dict())
 
         epsd_loss = sum(epsd_loss) / len(epsd_loss)
@@ -153,22 +153,30 @@ class DQNPolicy:
         :return:
         """
         state_mb = torch.stack([that_state for (that_state, _, _, _, _) in exp_minibatch], dim=0)
+        state_mb = state_mb.to(self.device)
         next_state_mb = torch.stack([that_next_state for (_, _, _, that_next_state, _) in exp_minibatch],
-                                    dim=0)
+                                    dim=0).to(self.device)
         rewards_mb = torch.as_tensor([that_reward for (_, _, that_reward, _, _) in exp_minibatch])
+        rewards_mb = rewards_mb.to(self.device)
         terminated_mb = torch.as_tensor([if_terminated for (_, _, _, _, if_terminated) in exp_minibatch],
-                                        dtype=torch.int)
+                                        dtype=torch.int).to(self.device)
         actions_mb = torch.as_tensor([that_action for (_, that_action, _, _, _) in exp_minibatch])
+        actions_mb = actions_mb.to(self.device)
 
         # Calculate the actual Q-values for that state and the chosen action
         actions_mb = actions_mb.unsqueeze(dim=1)
         masked_qvals = self.active_model.get_qvalues(state_mb).gather(dim=1, index=actions_mb).squeeze()
+        if len(masked_qvals.shape) == 0:  # Little hack to prevent broadcasting errors during loss calculation
+            masked_qvals = masked_qvals.unsqueeze(dim=0)
 
         # Calculate the target Q-values for the next_state
         next_qvals = self.active_model.get_qvalues(next_state_mb)
         # keepdims is set True, because gather needs same dims input as index
         next_qvals_argmax = next_qvals.argmax(dim=1, keepdims=True)
         masked_next_qvals = self.target_model.get_qvalues(next_state_mb).gather(dim=1, index=next_qvals_argmax)
+        masked_next_qvals = masked_next_qvals.squeeze()
+        if len(masked_next_qvals.shape) == 0:
+            masked_next_qvals = masked_next_qvals.unsqueeze(dim=0)
         target = rewards_mb + (1.0-terminated_mb)*self.discount_factor*masked_next_qvals
 
         # Detaching `target` tensor because we only want to update the weights of active_model.
@@ -184,9 +192,9 @@ class DQNPolicy:
         """
         if isinstance(saved_policies, deque):
             if len(saved_policies) >= saved_policies.maxlen:
-                fname = saved_policies.popleft()
-                os.remove(fname)
-                os.remove(fname+'.active_model')
+                fname_ = saved_policies.popleft()
+                os.remove(fname_)
+                os.remove(fname_+'.model')
 
         if fname is None:
             datetime_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
@@ -194,13 +202,13 @@ class DQNPolicy:
 
         with open(fname, 'wb') as outp:
             pickle.dump(self, outp, pickle.HIGHEST_PROTOCOL)
-        torch.save(self.active_model, fname + '.active_model')
+        torch.save(self.active_model, fname + '.model')
 
         if isinstance(saved_policies, deque):
             saved_policies.append(fname)
 
         logging.info(f"{datetime.now()} - Saved policy: {fname}")
-        logging.info(f"{datetime.now()} - Saved active_model: {fname}.active_model")
+        logging.info(f"{datetime.now()} - Saved model: {fname}.model")
 
     @classmethod
     def load(cls, fname: str):
@@ -224,7 +232,7 @@ class DQNPolicy:
 
 def main():
     policy = DQNPolicy(env_name=envname)
-    policy.train(num_episodes=1200)
+    policy.train(num_episodes=500)
 
 
 def load_test(fname):

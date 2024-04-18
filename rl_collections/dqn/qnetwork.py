@@ -1,4 +1,5 @@
 from collections import abc
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,19 +14,35 @@ class QNetwork(nn.Module):
                                out_channels=32,
                                kernel_size=(8, 8),
                                stride=4)
+        std_dev = math.sqrt(2.0 / (4 * 84 * 84))
+        nn.init.normal_(self.conv1.weight, mean=0.0, std=std_dev)
+        self.conv1.bias.data.fill_(0.0)
+
         self.conv2 = nn.Conv2d(in_channels=32,
                                out_channels=64,
                                kernel_size=(4, 4),
                                stride=2)
+        std_dev = math.sqrt(2.0 / (32 * 4 * 8 * 8))
+        nn.init.normal_(self.conv2.weight, mean=0.0, std=std_dev)
+        self.conv2.bias.data.fill_(0.0)
+
         self.conv3 = nn.Conv2d(in_channels=64,
                                out_channels=64,
                                kernel_size=(3, 3),
                                stride=1)
-        self.fc = nn.Linear(in_features=64*6*6, out_features=512) # TODO: This is incorrect
+        std_dev = math.sqrt(2.0 / (64 * 32 * 4 * 4))
+        nn.init.normal_(self.conv3.weight, mean=0.0, std=std_dev)
+        self.conv3.bias.data.fill_(0.0)
+
+        self.fc = nn.Linear(in_features=64*6*6, out_features=512)
+        std_dev = math.sqrt(2.0 / (64 * 64 * 3 * 3))
+        nn.init.normal_(self.fc.weight, mean=0.0, std=std_dev)
+        self.fc.bias.data.fill_(0.0)
+
         self.V = nn.Linear(in_features=512, out_features=1)
         self.A = nn.Linear(in_features=512, out_features=num_actions)
 
-        self.get_qvalues = self.forward # TODO: This doesn't work
+        self.get_qvalues = self.forward
         self.optimizer = optim.Adam(params=self.parameters(), lr=lr)
 
     def forward(self, state: torch.Tensor):
