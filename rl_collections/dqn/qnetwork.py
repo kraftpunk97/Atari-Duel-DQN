@@ -34,7 +34,7 @@ class QNetwork(nn.Module):
         nn.init.normal_(self.conv3.weight, mean=0.0, std=std_dev)
         self.conv3.bias.data.fill_(0.0)
 
-        self.fc = nn.Linear(in_features=64*6*6, out_features=512)
+        self.fc = nn.Linear(in_features=64*7*7, out_features=512)
         std_dev = math.sqrt(2.0 / (64 * 64 * 3 * 3))
         nn.init.normal_(self.fc.weight, mean=0.0, std=std_dev)
         self.fc.bias.data.fill_(0.0)
@@ -68,9 +68,11 @@ class QNetwork(nn.Module):
         masked_qvals = masked_qvals.to(self.device)
         target_qvals = target_qvals.to(self.device)
 
+
         loss_func = nn.SmoothL1Loss()
         loss = loss_func(masked_qvals, target_qvals)
 
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         return loss

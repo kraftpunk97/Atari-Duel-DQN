@@ -3,15 +3,17 @@ import pickle
 import random
 import torch
 import logging
+import numpy as np
 import gymnasium as gym
+from gymnasium.wrappers import AtariPreprocessing, FrameStack
 from collections import abc
 from pathlib import Path
 from datetime import datetime
 from collections import deque
 from qnetwork import QNetwork
-from utils import preprocessing as _preprocessing
+#from utils import preprocessing as _preprocessing
 
-envname = 'ALE/Pong-v5'
+envname = 'PongNoFrameskip-v4'
 saved_policies_maxlen = 20
 
 logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
@@ -26,6 +28,10 @@ class DQNPolicy:
         print(f"Using device: {self.device}")
 
         self.env = gym.make(env_name)
+        self.env = AtariPreprocessing(self.env, grayscale_obs=True,
+                                      scale_obs=True,
+                                      terminal_on_life_loss=True)
+        self.env = FrameStack(self.env, num_stack=4)
         num_actions: int = self.env.action_space.n
 
         self.active_model = QNetwork(num_actions, device=self.device)
@@ -34,8 +40,8 @@ class DQNPolicy:
         self.target_model.to(self.device)
 
         self.num_actions = num_actions
-        self.epsilon = 1  # 1 -> 0.1 over 1_000_000 frames
-        self.replay_memory_maxlen = 1_000_000
+        self.epsilon = 1  # 1 -> 0.01 over 100_000 frames
+        self.replay_memory_maxlen = 100_000
         self.replay_memory = deque(maxlen=self.replay_memory_maxlen)
         self.frameskip = 4
 
@@ -44,6 +50,7 @@ class DQNPolicy:
         self.minibatch_size = 32
         self.discount_factor = 0.99
         self.current_state = None
+        self.model_update_freq = 10000
 
     def get_qvalues(self, state=None) -> torch.Tensor:
         """
@@ -61,7 +68,14 @@ class DQNPolicy:
         :param enable_epsilon: `bool` - Whether to implement epsilon-greedy policy
         :return: action
         """
-        self.epsilon = max(0.1, 1 - (99e-8 * self.framectr))
+        self.framectr += 1
+        flag = False
+        '''
+        if not flag and self.framectr > 1000:
+            print("We reached a 1000 frames")
+            flag = True
+        '''
+        self.epsilon = max(0.01, 1 - (1.1e-6 * self.framectr))
         if enable_epsilon and random.uniform(0, 1) < self.epsilon:
             action = self.env.action_space.sample()
         else:
@@ -70,7 +84,7 @@ class DQNPolicy:
 
     def train(self, num_episodes: int):
         Path("models/").mkdir(parents=True, exist_ok=True)
-        running_rewards = deque(maxlen=25)
+        running_rewards = deque(maxlen=100)
         saved_policies = deque(maxlen=saved_policies_maxlen)
         for eps_num in range(num_episodes):
             epsd_loss, epsd_reward = self.episode()
@@ -78,7 +92,7 @@ class DQNPolicy:
 
             if eps_num % 25 == 0:
                 mean_reward = sum(running_rewards) / len(running_rewards)
-                logging.info(f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon};  loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+                logging.info(f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
         logging.info(f"{datetime.now()} - Training complete")
         self.env.close()
@@ -90,6 +104,9 @@ class DQNPolicy:
         """
         # Initialize the sequence
         first_frame, _ = self.env.reset()
+        first_frame = np.array(first_frame, dtype=np.float32)
+        first_frame = torch.from_numpy(first_frame)
+        '''
         self.framebuffer.clear()
         for _ in range(4):
             self.framebuffer.append(first_frame)
@@ -97,7 +114,10 @@ class DQNPolicy:
         first_state = torch.stack([torch.from_numpy(frame).type(torch.float32)
                                    for frame in preprocessed_first_frame])
         self.current_state = first_state
-
+        '''
+        #########
+        self.current_state = first_frame
+        #########
         terminated = False
         epsd_loss = []
         epsd_reward = 0
@@ -105,6 +125,8 @@ class DQNPolicy:
             action = self.get_action(enable_epsilon=True)
 
             # Execute action(t) in emulator and observe reward(t) and observation(t+1)
+            
+            '''
             running_reward = 0
             for _ in range(self.frameskip):
                 frame, reward, terminated, truncated, info = self.env.step(action)
@@ -119,13 +141,22 @@ class DQNPolicy:
                 if terminated or truncated:
                     terminated = True
                     break
-
+                    
             self.framebuffer.append(frame)  # framebuffer is a deque
 
             # Preprocess sequence(t+1)
             preprocessed_fb = _preprocessing(self.framebuffer)
             next_state = torch.stack([torch.from_numpy(frame).type(torch.float32)
                                       for frame in preprocessed_fb])
+            '''
+            
+            ##########
+            next_state, running_reward, terminated, truncated, info = self.env.step(action)
+            next_state = np.array(next_state, dtype=np.float32)
+            next_state = torch.from_numpy(next_state)
+            terminated = terminated or truncated
+            ##########
+
             epsd_reward += running_reward
             # Store (sequence(t), action(t), sequence(t+1), reward(t), terminated(t))
             experience_tuple = (self.current_state, action, running_reward, next_state, terminated)
@@ -133,13 +164,14 @@ class DQNPolicy:
             self.replay_memory.append(experience_tuple)
 
             # Sample random mini-batches of experience_tuples from replay_memory
-            minibatch_size = min(self.minibatch_size, len(self.replay_memory))
-            exp_minibatch = random.sample(self.replay_memory, minibatch_size)
-            loss = self._train_step(exp_minibatch)
-            epsd_loss.append(loss)
+            if len(self.replay_memory) >= self.minibatch_size:
+                idx = np.random.choice(len(self.replay_memory), self.minibatch_size)
+                exp_minibatch = [self.replay_memory[i] for i in idx]
+                loss = self._train_step(exp_minibatch)
+                epsd_loss.append(loss)
 
             # Regularly updating the target model
-            if self.framectr % 100 == 0:
+            if self.framectr % self.model_update_freq == 0:
                 self.target_model.load_state_dict(self.active_model.state_dict())
 
         epsd_loss = sum(epsd_loss) / len(epsd_loss)
@@ -154,14 +186,14 @@ class DQNPolicy:
         """
         state_mb = torch.stack([that_state for (that_state, _, _, _, _) in exp_minibatch], dim=0)
         state_mb = state_mb.to(self.device)
-        next_state_mb = torch.stack([that_next_state for (_, _, _, that_next_state, _) in exp_minibatch],
-                                    dim=0).to(self.device)
-        rewards_mb = torch.as_tensor([that_reward for (_, _, that_reward, _, _) in exp_minibatch])
-        rewards_mb = rewards_mb.to(self.device)
-        terminated_mb = torch.as_tensor([if_terminated for (_, _, _, _, if_terminated) in exp_minibatch],
-                                        dtype=torch.int).to(self.device)
         actions_mb = torch.as_tensor([that_action for (_, that_action, _, _, _) in exp_minibatch])
         actions_mb = actions_mb.to(self.device)
+        rewards_mb = torch.as_tensor([that_reward for (_, _, that_reward, _, _) in exp_minibatch], dtype=torch.float32)
+        rewards_mb = rewards_mb.to(self.device)
+        next_state_mb = torch.stack([that_next_state for (_, _, _, that_next_state, _) in exp_minibatch],
+                                    dim=0).to(self.device)
+        terminated_mb = torch.as_tensor([if_terminated for (_, _, _, _, if_terminated) in exp_minibatch],
+                                        dtype=torch.int).to(self.device)
 
         # Calculate the actual Q-values for that state and the chosen action
         actions_mb = actions_mb.unsqueeze(dim=1)
