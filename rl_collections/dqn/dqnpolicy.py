@@ -223,7 +223,8 @@ class DQNPolicy:
 
 
 def main():
-    policy = DQNPolicy
+    policy = DQNPolicy(env_name=envname)
+    policy.train(num_episodes=1200)
 
 
 def load_test(fname):
