@@ -4,6 +4,7 @@ import random
 import torch
 import logging
 import numpy as np
+import matplotlib.pyplot as plt
 import gymnasium as gym
 from gymnasium.wrappers import AtariPreprocessing, FrameStack
 from collections import abc
@@ -11,10 +12,9 @@ from pathlib import Path
 from datetime import datetime
 from collections import deque
 from qnetwork import QNetwork
-#from utils import preprocessing as _preprocessing
 
 envname = 'PongNoFrameskip-v4'
-saved_policies_maxlen = 20
+saved_policies_maxlen = 10
 
 logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
                     level=logging.INFO)
@@ -69,12 +69,6 @@ class DQNPolicy:
         :return: action
         """
         self.framectr += 1
-        flag = False
-        '''
-        if not flag and self.framectr > 1000:
-            print("We reached a 1000 frames")
-            flag = True
-        '''
         self.epsilon = max(0.01, 1 - (1.1e-6 * self.framectr))
         if enable_epsilon and random.uniform(0, 1) < self.epsilon:
             action = self.env.action_space.sample()
@@ -84,16 +78,33 @@ class DQNPolicy:
 
     def train(self, num_episodes: int):
         Path("models/").mkdir(parents=True, exist_ok=True)
-        running_rewards = deque(maxlen=100)
+        running_rewards = deque(maxlen=20)
         saved_policies = deque(maxlen=saved_policies_maxlen)
-        for eps_num in range(num_episodes):
+        alltime_rewards_mean = []
+        running_rewards_mean = []
+        reward_sum = 0
+        logging.info(f"{datetime.now()} - Beginning training for atleast {num_episodes} episodes.")
+        for eps_num in range(1, num_episodes+1):
             epsd_loss, epsd_reward = self.episode()
             running_rewards.append(epsd_reward)
+            mean_reward = sum(running_rewards) / len(running_rewards)
+            running_rewards_mean.append(mean_reward)
+            reward_sum += epsd_reward
+            alltime_rewards_mean.append(reward_sum/eps_num)
 
-            if eps_num % 25 == 0:
-                mean_reward = sum(running_rewards) / len(running_rewards)
+            if mean_reward >= 19.0:  # Save latest model if we hit 19.0 average reward; and exit
                 logging.info(f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
+                break
+            if eps_num % 25 == 0:  # Check progress after every 10th episode
+                logging.info(f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+            if eps_num % 25 == 0:  # Save after every 40th episode
+                self.save(saved_policies=saved_policies)
+            if eps_num == num_episodes:  # Display score and save latest model after final episode of training
+                logging.info(f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+                self.save(saved_policies=saved_policies)
+        
+        DQNPolicy.plot_rewards(running_rewards_mean, alltime_rewards_mean)
         logging.info(f"{datetime.now()} - Training complete")
         self.env.close()
 
@@ -106,18 +117,8 @@ class DQNPolicy:
         first_frame, _ = self.env.reset()
         first_frame = np.array(first_frame, dtype=np.float32)
         first_frame = torch.from_numpy(first_frame)
-        '''
-        self.framebuffer.clear()
-        for _ in range(4):
-            self.framebuffer.append(first_frame)
-        preprocessed_first_frame = _preprocessing(self.framebuffer)
-        first_state = torch.stack([torch.from_numpy(frame).type(torch.float32)
-                                   for frame in preprocessed_first_frame])
-        self.current_state = first_state
-        '''
-        #########
         self.current_state = first_frame
-        #########
+        
         terminated = False
         epsd_loss = []
         epsd_reward = 0
@@ -125,37 +126,11 @@ class DQNPolicy:
             action = self.get_action(enable_epsilon=True)
 
             # Execute action(t) in emulator and observe reward(t) and observation(t+1)
-            
-            '''
-            running_reward = 0
-            for _ in range(self.frameskip):
-                frame, reward, terminated, truncated, info = self.env.step(action)
-                reward = (1
-                          if reward > 0.0
-                          else -1
-                          if reward < 0.0
-                          else 0)
-                self.framectr += 1
-                running_reward += reward
-
-                if terminated or truncated:
-                    terminated = True
-                    break
-                    
-            self.framebuffer.append(frame)  # framebuffer is a deque
-
-            # Preprocess sequence(t+1)
-            preprocessed_fb = _preprocessing(self.framebuffer)
-            next_state = torch.stack([torch.from_numpy(frame).type(torch.float32)
-                                      for frame in preprocessed_fb])
-            '''
-            
-            ##########
             next_state, running_reward, terminated, truncated, info = self.env.step(action)
             next_state = np.array(next_state, dtype=np.float32)
             next_state = torch.from_numpy(next_state)
             terminated = terminated or truncated
-            ##########
+            
 
             epsd_reward += running_reward
             # Store (sequence(t), action(t), sequence(t+1), reward(t), terminated(t))
@@ -261,10 +236,21 @@ class DQNPolicy:
 
         return policy
 
+    @classmethod
+    def plot_rewards(cls, running_rewards, alltime_rewards):
+       X = np.arange(0, len(running_rewards), 1)
+       plt.plot(X, running_rewards, color='orange', label='Mean rewards of the last 20 episodes')
+       plt.plot(X, alltime_rewards, color='blue', label='All time average reward')
+       plt.xlabel("Number of Episodes")
+       plt.ylabel("Reward")
+       plt.legend()
+       plt.savefig('plot.png')
+
+
 
 def main():
     policy = DQNPolicy(env_name=envname)
-    policy.train(num_episodes=500)
+    policy.train(num_episodes=1500)
 
 
 def load_test(fname):
