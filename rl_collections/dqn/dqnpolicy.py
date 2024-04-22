@@ -246,7 +246,38 @@ class DQNPolicy:
        plt.legend()
        plt.savefig('plot.png')
 
+    def play_episode(self, render=False):
+        """
+        Demonstrate a learned policy.
+        :param render: 
+        :returns: `None`
+        """
+        self.env = gym.make(self.env.spec.id, 
+                            render_mode='human' if render else None)
+        self.env = AtariPreprocessing(self.env, grayscale_obs=True,
+                                      scale_obs=True,
+                                      terminal_on_life_loss=True)
+        self.env = FrameStack(self.env, num_stack=4)
+        first_frame, _ = self.env.reset()
+        first_frame = np.array(first_frame, dtype=np.float32)
+        first_frame = torch.from_numpy(first_frame)
+        self.current_state = first_frame
+        
+        terminated = False
+        epsd_reward = 0
+        while not terminated:
+            action = self.get_action(enable_epsilon=False)
 
+            # Execute action(t) in emulator and observe reward(t) and observation(t+1)
+            next_state, running_reward, terminated, truncated, info = self.env.step(action)
+            next_state = np.array(next_state, dtype=np.float32)
+            next_state = torch.from_numpy(next_state)
+            terminated = terminated or truncated
+
+            epsd_reward += running_reward
+        if not render:
+            print(f"Reward earned during episode : {epsd_reward}")
+        
 
 def main():
     policy = DQNPolicy(env_name=envname)
