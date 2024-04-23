@@ -263,18 +263,23 @@ class DQNPolicy:
         policy = DQNPolicy(envname, no_train=True, active_model_path=model_file)
         policy.env = gym.make(envname, render_mode='human' if render else None)
         policy.env = AtariPreprocessing(policy.env, grayscale_obs=True,
-                                        scale_obs=True, terminal_on_life_loss=True)
+                                        scale_obs=True, terminal_on_life_loss=False)
         policy.env = FrameStack(policy.env, num_stack=4)
 
         policy.reset_env()
         
         terminated = False
         epsd_reward = 0
+        unwrapped_ale = policy.env.unwrapped.ale
+        new_lives = unwrapped_ale.lives()
         while not terminated:
             action = policy.get_action(enable_epsilon=False)
 
             # Execute action(t) in emulator and observe reward(t) and observation(t+1)
             next_state, running_reward, terminated, truncated, info = policy.env.step(action)
+            if new_lives > unwrapped_ale.lives():  # If life is lost; press the fire button (action 1) to spawn new ball
+                new_lives = unwrapped_ale.lives()
+                next_state, running_reward, terminated, truncated, info = policy.env.step(1)
             next_state = np.array(next_state, dtype=np.float32)
             next_state = torch.from_numpy(next_state)
             terminated = terminated or truncated
@@ -290,4 +295,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    DQNPolicy.play_policy("models/Duel DQN Breakout2.pth", render=True)
