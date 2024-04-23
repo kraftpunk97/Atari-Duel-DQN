@@ -13,7 +13,7 @@ from datetime import datetime
 from collections import deque
 from qnetwork import QNetwork
 
-envname = 'BreakoutNoFrameskip-v4'
+envname = 'PongNoFrameskip-v4'
 saved_policies_maxlen = 10
 
 logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
@@ -21,11 +21,9 @@ logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-
 
 
 class DQNPolicy:
-    def __init__(self, env_name=envname, device=None, *, no_train: bool=False, active_model_path=None):
+    def __init__(self, env_name=envname, device=None, *, no_train: bool = False, active_model_path=None):
         self.device = (device if device is not None
-                       else "cuda"
-        if torch.cuda.is_available()
-        else "cpu")
+                       else "cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
 
         self.env = gym.make(env_name)
@@ -35,15 +33,15 @@ class DQNPolicy:
         self.env = FrameStack(self.env, num_stack=4)
         num_actions: int = self.env.action_space.n
 
-        
         if not no_train:
             self.active_model = QNetwork(num_actions, device=self.device)
             self.active_model.to(self.device)
             self.target_model = QNetwork(num_actions, device=self.device)
             self.target_model.to(self.device)
         else:
-            self.active_model = torch.load(active_model_path)
-            self.active_model.to(self.device)
+            self.active_model = QNetwork(num_actions, device=device)
+            self.active_model.load_state_dict(torch.load(active_model_path,
+                                                         map_location=torch.device(self.device)))
             self.target_model = None
 
         self.num_actions = num_actions
@@ -64,7 +62,6 @@ class DQNPolicy:
         first_frame = np.array(first_frame, dtype=np.float32)
         first_frame = torch.from_numpy(first_frame)
         self.current_state = first_frame
-        
 
     def get_qvalues(self, state=None) -> torch.Tensor:
         """
@@ -95,10 +92,9 @@ class DQNPolicy:
         running_rewards = deque(maxlen=20)
         saved_policies = deque(maxlen=saved_policies_maxlen)
         epsd_reward_list = []
-        epsd_reward_list = []
         running_rewards_mean = []
         reward_sum = 0
-        logging.info(f"{datetime.now()} - Beginning training for atleast {num_episodes} episodes.")
+        logging.info(f"{datetime.now()} - Beginning training for at least {num_episodes} episodes.")
         for eps_num in range(1, num_episodes + 1):
             epsd_loss, epsd_reward = self.episode()
             running_rewards.append(epsd_reward)
@@ -110,17 +106,20 @@ class DQNPolicy:
 
             if mean_reward >= 19.0:  # Save latest model if we hit 19.0 average reward; and exit
                 logging.info(
-                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  "
+                    f"Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
                 break
             if eps_num % 25 == 0:  # Check progress after every 10th episode
                 logging.info(
-                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  "
+                    f"Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
             if eps_num % 25 == 0:  # Save after every 40th episode
                 self.save(saved_policies=saved_policies)
             if eps_num == num_episodes:  # Display score and save latest model after final episode of training
                 logging.info(
-                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  "
+                    f"Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
         
         DQNPolicy.plot_rewards(running_rewards_mean, epsd_reward_list)
@@ -217,23 +216,17 @@ class DQNPolicy:
         if isinstance(saved_policies, deque):
             if len(saved_policies) >= saved_policies.maxlen:
                 fname_ = saved_policies.popleft()
-                #os.remove(fname_)
                 os.remove(fname_+'.pth')
 
         if fname is None:
             datetime_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-            fname = f"models/policy-{datetime_now}.pkl"
+            fname = f"models/policy-{datetime_now}"
 
-        '''
-        with open(fname, 'wb') as outp:
-            pickle.dump(self, outp, pickle.HIGHEST_PROTOCOL)
-        '''
         torch.save(self.active_model.state_dict(), fname + '.pth')
 
         if isinstance(saved_policies, deque):
             saved_policies.append(fname)
 
-        #logging.info(f"{datetime.now()} - Saved policy: {fname}")
         logging.info(f"{datetime.now()} - Saved model: {fname}.pth")
 
     @classmethod
@@ -257,16 +250,16 @@ class DQNPolicy:
 
     @classmethod
     def plot_rewards(cls, running_rewards, epsd_reward_list):
-       X = np.arange(0, len(running_rewards), 1)
-       plt.plot(X, epsd_reward_list, color='blue', label='Episode reward')
-       plt.plot(X, running_rewards, color='orange', label='Mean rewards of the last 20 episodes')
-       plt.xlabel("Number of Episodes")
-       plt.ylabel("Reward")
-       plt.legend()
-       plt.savefig('plot.png')
+        X = np.arange(0, len(running_rewards), 1)
+        plt.plot(X, epsd_reward_list, color='blue', label='Episode reward')
+        plt.plot(X, running_rewards, color='orange', label='Mean rewards of the last 20 episodes')
+        plt.xlabel("Number of Episodes")
+        plt.ylabel("Reward")
+        plt.legend()
+        plt.savefig('plot.png')
 
     @classmethod
-    def play_policy(cls, model_file: str, render: bool=False):
+    def play_policy(cls, model_file: str, render: bool = False):
         """
         Demonstrate a learned policy.
         :param render:
@@ -274,6 +267,11 @@ class DQNPolicy:
         :returns: `None`
         """
         policy = DQNPolicy(envname, no_train=True, active_model_path=model_file)
+        policy.env = gym.make(envname, render_mode='human' if render else None)
+        policy.env = AtariPreprocessing(policy.env, grayscale_obs=True,
+                                        scale_obs=True, terminal_on_life_loss=True)
+        policy.env = FrameStack(policy.env, num_stack=4)
+
         policy.reset_env()
         
         terminated = False
@@ -282,7 +280,6 @@ class DQNPolicy:
             action = policy.get_action(enable_epsilon=False)
 
             # Execute action(t) in emulator and observe reward(t) and observation(t+1)
-            next_state, running_reward, terminated, truncated, info = policy.env.step(action)
             next_state, running_reward, terminated, truncated, info = policy.env.step(action)
             next_state = np.array(next_state, dtype=np.float32)
             next_state = torch.from_numpy(next_state)
@@ -298,6 +295,5 @@ def main():
     policy.train(num_episodes=2000)
 
 
-
 if __name__ == '__main__':
-    DQNPolicy.play_policy(model_file="models/pong_dueldqn.pth", render=True)
+    DQNPolicy.play_policy(model_file="models/pong.pth", render=True)
