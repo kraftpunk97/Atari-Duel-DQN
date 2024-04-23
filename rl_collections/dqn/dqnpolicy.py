@@ -13,10 +13,10 @@ from datetime import datetime
 from collections import deque
 from qnetwork import QNetwork
 
-envname = 'PongNoFrameskip-v4'
+envname = 'BreakoutNoFrameskip-v4'
 saved_policies_maxlen = 10
 
-logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
+logging.basicConfig(filename="DQN-{}-{}.log".format(envname, datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
                     level=logging.INFO)
 
 
@@ -29,7 +29,7 @@ class DQNPolicy:
         self.env = gym.make(env_name)
         self.env = AtariPreprocessing(self.env, grayscale_obs=True,
                                       scale_obs=True,
-                                      terminal_on_life_loss=True)
+                                      terminal_on_life_loss=False)
         self.env = FrameStack(self.env, num_stack=4)
         num_actions: int = self.env.action_space.n
 
@@ -87,39 +87,33 @@ class DQNPolicy:
             action = self.active_model.get_action(self.current_state)
         return action
 
-    def train(self, num_episodes: int):
+    def train(self, target_score: int):
         Path("models/").mkdir(parents=True, exist_ok=True)
         running_rewards = deque(maxlen=20)
         saved_policies = deque(maxlen=saved_policies_maxlen)
         epsd_reward_list = []
         running_rewards_mean = []
-        reward_sum = 0
-        logging.info(f"{datetime.now()} - Beginning training for at least {num_episodes} episodes.")
-        for eps_num in range(1, num_episodes + 1):
+        logging.info(f"{datetime.now()} - Beginning training")
+        eps_num = 0
+        while True:
+            eps_num += 1
             epsd_loss, epsd_reward = self.episode()
             running_rewards.append(epsd_reward)
             mean_reward = sum(running_rewards) / len(running_rewards)
             running_rewards_mean.append(mean_reward)
-            reward_sum += epsd_reward
-            epsd_reward_list.append(epsd_reward)
             epsd_reward_list.append(epsd_reward)
 
-            if mean_reward >= 19.0:  # Save latest model if we hit 19.0 average reward; and exit
+            if mean_reward >= target_score:  # Save latest model if we hit target score average reward; and exit 
                 logging.info(
-                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  "
+                    f"{datetime.now()} - Episode {eps_num}; Epsilon: {self.epsilon:.4f};  "
                     f"Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
                 break
             if eps_num % 25 == 0:  # Check progress after every 10th episode
                 logging.info(
-                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  "
+                    f"{datetime.now()} - Episode {eps_num}; Epsilon: {self.epsilon:.4f};  "
                     f"Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
-            if eps_num % 25 == 0:  # Save after every 40th episode
-                self.save(saved_policies=saved_policies)
-            if eps_num == num_episodes:  # Display score and save latest model after final episode of training
-                logging.info(
-                    f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  "
-                    f"Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
+            if eps_num % 100 == 0:  # Save after every 100th episode
                 self.save(saved_policies=saved_policies)
         
         DQNPolicy.plot_rewards(running_rewards_mean, epsd_reward_list)
@@ -292,8 +286,8 @@ class DQNPolicy:
 
 def main():
     policy = DQNPolicy(env_name=envname)
-    policy.train(num_episodes=2000)
+    policy.train(target_score=820)
 
 
 if __name__ == '__main__':
-    DQNPolicy.play_policy(model_file="models/Duel DQN Pong2.pth", render=True)
+    main()
