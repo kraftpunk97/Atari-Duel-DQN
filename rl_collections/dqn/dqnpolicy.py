@@ -296,4 +296,4 @@ def main():
 
 
 if __name__ == '__main__':
-    DQNPolicy.play_policy(model_file="models/pong.pth", render=True)
+    DQNPolicy.play_policy(model_file="models/Duel DQN Pong2.pth", render=True)
