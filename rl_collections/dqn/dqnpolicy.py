@@ -21,7 +21,7 @@ logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-
 
 
 class DQNPolicy:
-    def __init__(self, env_name=envname, device=None, *, no_train: bool = False, active_model_path=None):
+    def __init__(self, env_name=envname, device=None, *, no_train: bool=False, active_model_path=None):
         self.device = (device if device is not None
                        else "cuda"
         if torch.cuda.is_available()
@@ -35,15 +35,15 @@ class DQNPolicy:
         self.env = FrameStack(self.env, num_stack=4)
         num_actions: int = self.env.action_space.n
 
+        
         if not no_train:
             self.active_model = QNetwork(num_actions, device=self.device)
             self.active_model.to(self.device)
             self.target_model = QNetwork(num_actions, device=self.device)
             self.target_model.to(self.device)
         else:
-            self.active_model = QNetwork(num_actions, device=self.device)
-            self.active_model = torch.load(active_model_path, map_location=torch.device('cpu'))
-            self.active_model.device = 'cpu'
+            self.active_model = torch.load(active_model_path)
+            self.active_model.to(self.device)
             self.target_model = None
 
         self.num_actions = num_actions
@@ -64,6 +64,7 @@ class DQNPolicy:
         first_frame = np.array(first_frame, dtype=np.float32)
         first_frame = torch.from_numpy(first_frame)
         self.current_state = first_frame
+        
 
     def get_qvalues(self, state=None) -> torch.Tensor:
         """
@@ -94,6 +95,7 @@ class DQNPolicy:
         running_rewards = deque(maxlen=20)
         saved_policies = deque(maxlen=saved_policies_maxlen)
         epsd_reward_list = []
+        epsd_reward_list = []
         running_rewards_mean = []
         reward_sum = 0
         logging.info(f"{datetime.now()} - Beginning training for atleast {num_episodes} episodes.")
@@ -103,6 +105,7 @@ class DQNPolicy:
             mean_reward = sum(running_rewards) / len(running_rewards)
             running_rewards_mean.append(mean_reward)
             reward_sum += epsd_reward
+            epsd_reward_list.append(epsd_reward)
             epsd_reward_list.append(epsd_reward)
 
             if mean_reward >= 19.0:  # Save latest model if we hit 19.0 average reward; and exit
@@ -119,7 +122,7 @@ class DQNPolicy:
                 logging.info(
                     f"{datetime.now()} - Episode {eps_num}/{num_episodes}; Epsilon: {self.epsilon:.4f};  Loss: {epsd_loss:.4f}; Reward: {mean_reward}")
                 self.save(saved_policies=saved_policies)
-
+        
         DQNPolicy.plot_rewards(running_rewards_mean, epsd_reward_list)
         logging.info(f"{datetime.now()} - Training complete")
         self.env.close()
@@ -130,6 +133,8 @@ class DQNPolicy:
         :return: epsd_loss, epsd_reward: Loss and reward for that episode.
         """
         # Initialize the sequence
+        self.reset_env()
+
         self.reset_env()
 
         terminated = False
@@ -212,23 +217,23 @@ class DQNPolicy:
         if isinstance(saved_policies, deque):
             if len(saved_policies) >= saved_policies.maxlen:
                 fname_ = saved_policies.popleft()
-                # os.remove(fname_)
-                os.remove(fname_ + '.pth')
+                #os.remove(fname_)
+                os.remove(fname_+'.pth')
 
         if fname is None:
             datetime_now = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
             fname = f"models/policy-{datetime_now}.pkl"
 
-        """
+        '''
         with open(fname, 'wb') as outp:
             pickle.dump(self, outp, pickle.HIGHEST_PROTOCOL)
-        """
+        '''
         torch.save(self.active_model.state_dict(), fname + '.pth')
 
         if isinstance(saved_policies, deque):
             saved_policies.append(fname)
 
-        # logging.info(f"{datetime.now()} - Saved policy: {fname}")
+        #logging.info(f"{datetime.now()} - Saved policy: {fname}")
         logging.info(f"{datetime.now()} - Saved model: {fname}.pth")
 
     @classmethod
@@ -242,7 +247,7 @@ class DQNPolicy:
             raise AttributeError("'fname' argument can not be None")
         with open(fname, 'rb') as inp:
             policy = pickle.load(inp)
-        model = torch.load(fname + ".model")
+        model = torch.load(fname+".model")
         policy.active_model = model
         policy.active_model.to(policy.device)
 
@@ -252,16 +257,16 @@ class DQNPolicy:
 
     @classmethod
     def plot_rewards(cls, running_rewards, epsd_reward_list):
-        X = np.arange(0, len(running_rewards), 1)
-        plt.plot(X, epsd_reward_list, color='blue', label='Episode reward')
-        plt.plot(X, running_rewards, color='orange', label='Mean rewards of the last 20 episodes')
-        plt.xlabel("Number of Episodes")
-        plt.ylabel("Reward")
-        plt.legend()
-        plt.savefig('plot.png')
+       X = np.arange(0, len(running_rewards), 1)
+       plt.plot(X, epsd_reward_list, color='blue', label='Episode reward')
+       plt.plot(X, running_rewards, color='orange', label='Mean rewards of the last 20 episodes')
+       plt.xlabel("Number of Episodes")
+       plt.ylabel("Reward")
+       plt.legend()
+       plt.savefig('plot.png')
 
     @classmethod
-    def play_policy(cls, model_file: str, render: bool= False):
+    def play_policy(cls, model_file: str, render: bool=False):
         """
         Demonstrate a learned policy.
         :param render:
@@ -269,19 +274,15 @@ class DQNPolicy:
         :returns: `None`
         """
         policy = DQNPolicy(envname, no_train=True, active_model_path=model_file)
-        policy.env = gym.make(envname, render_mode='human' if render else None)
-        policy.env = AtariPreprocessing(policy.env, grayscale_obs=True,
-                                      scale_obs=True,
-                                      terminal_on_life_loss=True)
-        policy.env = FrameStack(policy.env, num_stack=4)
         policy.reset_env()
-
+        
         terminated = False
         epsd_reward = 0
         while not terminated:
             action = policy.get_action(enable_epsilon=False)
-            #print(action)
+
             # Execute action(t) in emulator and observe reward(t) and observation(t+1)
+            next_state, running_reward, terminated, truncated, info = policy.env.step(action)
             next_state, running_reward, terminated, truncated, info = policy.env.step(action)
             next_state = np.array(next_state, dtype=np.float32)
             next_state = torch.from_numpy(next_state)
@@ -295,6 +296,7 @@ class DQNPolicy:
 def main():
     policy = DQNPolicy(env_name=envname)
     policy.train(num_episodes=2000)
+
 
 
 if __name__ == '__main__':

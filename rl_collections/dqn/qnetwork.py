@@ -39,7 +39,7 @@ class QNetwork(nn.Module):
         nn.init.normal_(self.fc.weight, mean=0.0, std=std_dev)
         self.fc.bias.data.fill_(0.0)
 
-        self.V = nn.Linear(in_features=512, out_features=1)
+        self.V = nn.Linear(in_features=512, out_features=1) 
         self.A = nn.Linear(in_features=512, out_features=num_actions)
 
         self.get_qvalues = self.forward
