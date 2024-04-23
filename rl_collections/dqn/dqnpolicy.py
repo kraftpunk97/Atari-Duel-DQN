@@ -13,7 +13,7 @@ from datetime import datetime
 from collections import deque
 from qnetwork import QNetwork
 
-envname = 'PongNoFrameskip-v4'
+envname = 'BreakoutNoFrameskip-v4'
 saved_policies_maxlen = 10
 
 logging.basicConfig(filename="DQN-{}.log".format(datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
