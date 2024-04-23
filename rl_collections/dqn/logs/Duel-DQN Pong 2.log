@@ -1,0 +1,114 @@
+#### Learned model not loading properly
+INFO:root:2024-04-22 16:24:31.924193 - Beginning training for atleast 1500 episodes.
+INFO:root:2024-04-22 16:26:51.596654 - Episode 25/1500; Epsilon: 0.9745;  Loss: 0.0104; Reward: -20.4
+INFO:root:2024-04-22 16:27:04.408272 - Saved policy: models/policy-2024-04-22T16-26-51.pkl
+INFO:root:2024-04-22 16:27:04.408528 - Saved model: models/policy-2024-04-22T16-26-51.pkl.model
+INFO:root:2024-04-22 16:29:29.523239 - Episode 50/1500; Epsilon: 0.9489;  Loss: 0.0021; Reward: -20.25
+INFO:root:2024-04-22 16:29:54.976660 - Saved policy: models/policy-2024-04-22T16-29-29.pkl
+INFO:root:2024-04-22 16:29:54.976973 - Saved model: models/policy-2024-04-22T16-29-29.pkl.model
+INFO:root:2024-04-22 16:32:22.190585 - Episode 75/1500; Epsilon: 0.9228;  Loss: 0.0020; Reward: -20.25
+INFO:root:2024-04-22 16:33:01.745614 - Saved policy: models/policy-2024-04-22T16-32-22.pkl
+INFO:root:2024-04-22 16:33:01.745848 - Saved model: models/policy-2024-04-22T16-32-22.pkl.model
+INFO:root:2024-04-22 16:35:24.125420 - Episode 100/1500; Epsilon: 0.8980;  Loss: 0.0025; Reward: -20.4
+INFO:root:2024-04-22 16:36:09.844642 - Saved policy: models/policy-2024-04-22T16-35-24.pkl
+INFO:root:2024-04-22 16:36:09.844888 - Saved model: models/policy-2024-04-22T16-35-24.pkl.model
+INFO:root:2024-04-22 16:38:34.423325 - Episode 125/1500; Epsilon: 0.8730;  Loss: 0.0023; Reward: -20.35
+INFO:root:2024-04-22 16:39:31.864039 - Saved policy: models/policy-2024-04-22T16-38-34.pkl
+INFO:root:2024-04-22 16:39:31.864314 - Saved model: models/policy-2024-04-22T16-38-34.pkl.model
+INFO:root:2024-04-22 16:42:03.338240 - Episode 150/1500; Epsilon: 0.8473;  Loss: 0.0021; Reward: -20.5
+INFO:root:2024-04-22 16:43:01.614043 - Saved policy: models/policy-2024-04-22T16-42-03.pkl
+INFO:root:2024-04-22 16:43:01.614186 - Saved model: models/policy-2024-04-22T16-42-03.pkl.model
+INFO:root:2024-04-22 16:45:32.018310 - Episode 175/1500; Epsilon: 0.8213;  Loss: 0.0022; Reward: -20.05
+INFO:root:2024-04-22 16:46:28.512139 - Saved policy: models/policy-2024-04-22T16-45-32.pkl
+INFO:root:2024-04-22 16:46:28.512378 - Saved model: models/policy-2024-04-22T16-45-32.pkl.model
+INFO:root:2024-04-22 16:49:01.246427 - Episode 200/1500; Epsilon: 0.7950;  Loss: 0.0022; Reward: -20.2
+INFO:root:2024-04-22 16:49:57.409727 - Saved policy: models/policy-2024-04-22T16-49-01.pkl
+INFO:root:2024-04-22 16:49:57.409993 - Saved model: models/policy-2024-04-22T16-49-01.pkl.model
+INFO:root:2024-04-22 16:52:51.482181 - Episode 225/1500; Epsilon: 0.7661;  Loss: 0.0031; Reward: -19.5
+INFO:root:2024-04-22 16:53:48.267485 - Saved policy: models/policy-2024-04-22T16-52-51.pkl
+INFO:root:2024-04-22 16:53:48.267773 - Saved model: models/policy-2024-04-22T16-52-51.pkl.model
+INFO:root:2024-04-22 16:56:42.670783 - Episode 250/1500; Epsilon: 0.7364;  Loss: 0.0061; Reward: -19.6
+INFO:root:2024-04-22 16:57:39.467957 - Saved policy: models/policy-2024-04-22T16-56-42.pkl
+INFO:root:2024-04-22 16:57:39.468184 - Saved model: models/policy-2024-04-22T16-56-42.pkl.model
+INFO:root:2024-04-22 17:00:38.058045 - Episode 275/1500; Epsilon: 0.7067;  Loss: 0.0041; Reward: -19.3
+INFO:root:2024-04-22 17:01:35.315113 - Saved policy: models/policy-2024-04-22T17-00-38.pkl
+INFO:root:2024-04-22 17:01:35.315435 - Saved model: models/policy-2024-04-22T17-00-38.pkl.model
+INFO:root:2024-04-22 17:04:35.262413 - Episode 300/1500; Epsilon: 0.6757;  Loss: 0.0035; Reward: -19.45
+INFO:root:2024-04-22 17:05:32.681309 - Saved policy: models/policy-2024-04-22T17-04-35.pkl
+INFO:root:2024-04-22 17:05:32.681659 - Saved model: models/policy-2024-04-22T17-04-35.pkl.model
+INFO:root:2024-04-22 17:08:52.652944 - Episode 325/1500; Epsilon: 0.6402;  Loss: 0.0034; Reward: -18.15
+INFO:root:2024-04-22 17:09:49.300390 - Saved policy: models/policy-2024-04-22T17-08-53.pkl
+INFO:root:2024-04-22 17:09:49.300606 - Saved model: models/policy-2024-04-22T17-08-53.pkl.model
+INFO:root:2024-04-22 17:13:17.738683 - Episode 350/1500; Epsilon: 0.6030;  Loss: 0.0037; Reward: -18.0
+INFO:root:2024-04-22 17:14:15.216346 - Saved policy: models/policy-2024-04-22T17-13-18.pkl
+INFO:root:2024-04-22 17:14:15.216561 - Saved model: models/policy-2024-04-22T17-13-18.pkl.model
+INFO:root:2024-04-22 17:17:42.166922 - Episode 375/1500; Epsilon: 0.5662;  Loss: 0.0035; Reward: -18.2
+INFO:root:2024-04-22 17:18:39.904212 - Saved policy: models/policy-2024-04-22T17-17-42.pkl
+INFO:root:2024-04-22 17:18:39.904506 - Saved model: models/policy-2024-04-22T17-17-42.pkl.model
+INFO:root:2024-04-22 17:22:35.314880 - Episode 400/1500; Epsilon: 0.5255;  Loss: 0.0035; Reward: -17.3
+INFO:root:2024-04-22 17:23:32.826271 - Saved policy: models/policy-2024-04-22T17-22-35.pkl
+INFO:root:2024-04-22 17:23:32.826553 - Saved model: models/policy-2024-04-22T17-22-35.pkl.model
+INFO:root:2024-04-22 17:27:42.655417 - Episode 425/1500; Epsilon: 0.4829;  Loss: 0.0034; Reward: -17.4
+INFO:root:2024-04-22 17:28:40.031263 - Saved policy: models/policy-2024-04-22T17-27-43.pkl
+INFO:root:2024-04-22 17:28:40.031498 - Saved model: models/policy-2024-04-22T17-27-43.pkl.model
+INFO:root:2024-04-22 17:33:05.089873 - Episode 450/1500; Epsilon: 0.4367;  Loss: 0.0033; Reward: -16.75
+INFO:root:2024-04-22 17:34:02.385507 - Saved policy: models/policy-2024-04-22T17-33-05.pkl
+INFO:root:2024-04-22 17:34:02.385657 - Saved model: models/policy-2024-04-22T17-33-05.pkl.model
+INFO:root:2024-04-22 17:38:39.569085 - Episode 475/1500; Epsilon: 0.3882;  Loss: 0.0035; Reward: -16.35
+INFO:root:2024-04-22 17:38:58.126729 - Saved policy: models/policy-2024-04-22T17-38-40.pkl
+INFO:root:2024-04-22 17:38:58.126873 - Saved model: models/policy-2024-04-22T17-38-40.pkl.model
+INFO:root:2024-04-22 17:44:02.681215 - Episode 500/1500; Epsilon: 0.3355;  Loss: 0.0036; Reward: -15.6
+INFO:root:2024-04-22 17:44:21.367884 - Saved policy: models/policy-2024-04-22T17-44-03.pkl
+INFO:root:2024-04-22 17:44:21.368010 - Saved model: models/policy-2024-04-22T17-44-03.pkl.model
+INFO:root:2024-04-22 17:49:16.682651 - Episode 525/1500; Epsilon: 0.2843;  Loss: 0.0037; Reward: -15.75
+INFO:root:2024-04-22 17:49:35.506510 - Saved policy: models/policy-2024-04-22T17-49-17.pkl
+INFO:root:2024-04-22 17:49:35.506730 - Saved model: models/policy-2024-04-22T17-49-17.pkl.model
+INFO:root:2024-04-22 17:55:05.898874 - Episode 550/1500; Epsilon: 0.2273;  Loss: 0.0040; Reward: -14.6
+INFO:root:2024-04-22 17:55:24.817887 - Saved policy: models/policy-2024-04-22T17-55-06.pkl
+INFO:root:2024-04-22 17:55:24.818115 - Saved model: models/policy-2024-04-22T17-55-06.pkl.model
+INFO:root:2024-04-22 18:01:40.540004 - Episode 575/1500; Epsilon: 0.1639;  Loss: 0.0039; Reward: -14.55
+INFO:root:2024-04-22 18:01:59.428592 - Saved policy: models/policy-2024-04-22T18-01-41.pkl
+INFO:root:2024-04-22 18:01:59.428834 - Saved model: models/policy-2024-04-22T18-01-41.pkl.model
+INFO:root:2024-04-22 18:09:08.560706 - Episode 600/1500; Epsilon: 0.0903;  Loss: 0.0035; Reward: -10.45
+INFO:root:2024-04-22 18:09:28.043754 - Saved policy: models/policy-2024-04-22T18-09-09.pkl
+INFO:root:2024-04-22 18:09:28.043969 - Saved model: models/policy-2024-04-22T18-09-09.pkl.model
+INFO:root:2024-04-22 18:17:21.787465 - Episode 625/1500; Epsilon: 0.0113;  Loss: 0.0033; Reward: -9.2
+INFO:root:2024-04-22 18:17:41.303731 - Saved policy: models/policy-2024-04-22T18-17-22.pkl
+INFO:root:2024-04-22 18:17:41.303968 - Saved model: models/policy-2024-04-22T18-17-22.pkl.model
+INFO:root:2024-04-22 18:28:41.405795 - Episode 650/1500; Epsilon: 0.0100;  Loss: 0.0027; Reward: 2.3
+INFO:root:2024-04-22 18:29:00.700875 - Saved policy: models/policy-2024-04-22T18-28-41.pkl
+INFO:root:2024-04-22 18:29:00.701000 - Saved model: models/policy-2024-04-22T18-28-41.pkl.model
+INFO:root:2024-04-22 18:39:15.881555 - Episode 675/1500; Epsilon: 0.0100;  Loss: 0.0022; Reward: 3.2
+INFO:root:2024-04-22 18:39:34.884322 - Saved policy: models/policy-2024-04-22T18-39-16.pkl
+INFO:root:2024-04-22 18:39:34.884465 - Saved model: models/policy-2024-04-22T18-39-16.pkl.model
+INFO:root:2024-04-22 18:49:51.234396 - Episode 700/1500; Epsilon: 0.0100;  Loss: 0.0020; Reward: 7.6
+INFO:root:2024-04-22 18:50:10.955455 - Saved policy: models/policy-2024-04-22T18-49-51.pkl
+INFO:root:2024-04-22 18:50:10.955638 - Saved model: models/policy-2024-04-22T18-49-51.pkl.model
+INFO:root:2024-04-22 18:59:58.653283 - Episode 725/1500; Epsilon: 0.0100;  Loss: 0.0016; Reward: 9.55
+INFO:root:2024-04-22 19:00:17.302207 - Saved policy: models/policy-2024-04-22T18-59-59.pkl
+INFO:root:2024-04-22 19:00:17.302502 - Saved model: models/policy-2024-04-22T18-59-59.pkl.model
+INFO:root:2024-04-22 19:09:59.912784 - Episode 750/1500; Epsilon: 0.0100;  Loss: 0.0016; Reward: 10.15
+INFO:root:2024-04-22 19:10:18.571125 - Saved policy: models/policy-2024-04-22T19-10-00.pkl
+INFO:root:2024-04-22 19:10:18.571253 - Saved model: models/policy-2024-04-22T19-10-00.pkl.model
+INFO:root:2024-04-22 19:20:20.066342 - Episode 775/1500; Epsilon: 0.0100;  Loss: 0.0018; Reward: 13.15
+INFO:root:2024-04-22 19:20:38.959001 - Saved policy: models/policy-2024-04-22T19-20-20.pkl
+INFO:root:2024-04-22 19:20:38.959121 - Saved model: models/policy-2024-04-22T19-20-20.pkl.model
+INFO:root:2024-04-22 19:29:51.032589 - Episode 800/1500; Epsilon: 0.0100;  Loss: 0.0017; Reward: 12.85
+INFO:root:2024-04-22 19:30:09.188323 - Saved policy: models/policy-2024-04-22T19-29-51.pkl
+INFO:root:2024-04-22 19:30:09.188512 - Saved model: models/policy-2024-04-22T19-29-51.pkl.model
+INFO:root:2024-04-22 19:38:03.509217 - Episode 825/1500; Epsilon: 0.0100;  Loss: 0.0018; Reward: 16.15
+INFO:root:2024-04-22 19:38:21.935769 - Saved policy: models/policy-2024-04-22T19-38-04.pkl
+INFO:root:2024-04-22 19:38:21.935990 - Saved model: models/policy-2024-04-22T19-38-04.pkl.model
+INFO:root:2024-04-22 19:44:38.114876 - Episode 850/1500; Epsilon: 0.0100;  Loss: 0.0017; Reward: 15.6
+INFO:root:2024-04-22 19:44:56.591990 - Saved policy: models/policy-2024-04-22T19-44-38.pkl
+INFO:root:2024-04-22 19:44:56.592215 - Saved model: models/policy-2024-04-22T19-44-38.pkl.model
+INFO:root:2024-04-22 19:50:30.300397 - Episode 875/1500; Epsilon: 0.0100;  Loss: 0.0014; Reward: 18.25
+INFO:root:2024-04-22 19:50:48.763919 - Saved policy: models/policy-2024-04-22T19-50-30.pkl
+INFO:root:2024-04-22 19:50:48.764124 - Saved model: models/policy-2024-04-22T19-50-30.pkl.model
+INFO:root:2024-04-22 19:56:18.839083 - Episode 900/1500; Epsilon: 0.0100;  Loss: 0.0012; Reward: 18.6
+INFO:root:2024-04-22 19:56:38.029929 - Saved policy: models/policy-2024-04-22T19-56-19.pkl
+INFO:root:2024-04-22 19:56:38.030049 - Saved model: models/policy-2024-04-22T19-56-19.pkl.model
+INFO:root:2024-04-22 19:57:26.696692 - Episode 904/1500; Epsilon: 0.0100;  Loss: 0.0013; Reward: 19.05
+INFO:root:2024-04-22 19:57:45.741301 - Saved policy: models/policy-2024-04-22T19-57-27.pkl
+INFO:root:2024-04-22 19:57:45.741523 - Saved model: models/policy-2024-04-22T19-57-27.pkl.model
+INFO:root:2024-04-22 19:57:45.856206 - Training complete
