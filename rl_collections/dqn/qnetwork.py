@@ -68,7 +68,6 @@ class QNetwork(nn.Module):
         masked_qvals = masked_qvals.to(self.device)
         target_qvals = target_qvals.to(self.device)
 
-
         loss_func = nn.SmoothL1Loss()
         loss = loss_func(masked_qvals, target_qvals)
 
