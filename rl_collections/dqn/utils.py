@@ -18,4 +18,4 @@ def plot_log_rewards(filepath):
 
 
 if __name__ == '__main__':
-    plot_log_rewards("../sandbox/log.log")
+    plot_log_rewards("rl_collections/dqn/logs/Duel-DQN Breakout2.log")

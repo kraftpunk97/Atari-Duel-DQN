@@ -13,7 +13,13 @@ from datetime import datetime
 from collections import deque
 from qnetwork import QNetwork
 
-envname = 'BreakoutNoFrameskip-v4'
+
+demo_dict = {
+    'Pong': ('PongNoFrameskip-v4', "rl_collections/dqn/models/Duel DQN Pong2.pth"),
+    'Space Invaders': ('SpaceInvadersNoFrameskip-v4', "rl_collections/dqn/models/Duel DQN Space Invaders4.pth"),
+    'Breakout': ('BreakoutNoFrameskip-v4', "rl_collections/dqn/models/Duel DQN Breakout2.pth")
+    }
+envname, policy_path = demo_dict['Space Invaders']
 saved_policies_maxlen = 10
 
 logging.basicConfig(filename="DQN-{}-{}.log".format(envname, datetime.now().strftime("%Y-%m-%dT%H-%M-%S")),
@@ -128,8 +134,6 @@ class DQNPolicy:
         # Initialize the sequence
         self.reset_env()
 
-        self.reset_env()
-
         terminated = False
         epsd_loss = []
         epsd_reward = 0
@@ -223,24 +227,6 @@ class DQNPolicy:
 
         logging.info(f"{datetime.now()} - Saved model: {fname}.pth")
 
-    @classmethod
-    def load(cls, fname: str):
-        """
-        Load a previously saved policy
-        :param fname: File name of the policy. Must have a corresponding `.active_model` file as well.
-        :return: policy: `DQNPolicy`
-        """
-        if fname is None:
-            raise AttributeError("'fname' argument can not be None")
-        with open(fname, 'rb') as inp:
-            policy = pickle.load(inp)
-        model = torch.load(fname+".model")
-        policy.active_model = model
-        policy.active_model.to(policy.device)
-
-        policy.env = gym.make(envname)
-
-        return policy
 
     @classmethod
     def plot_rewards(cls, running_rewards, epsd_reward_list):
@@ -295,4 +281,4 @@ def main():
 
 
 if __name__ == '__main__':
-    DQNPolicy.play_policy("models/Duel DQN Breakout2.pth", render=True)
+    DQNPolicy.play_policy(policy_path, render=True)
