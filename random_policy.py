@@ -1,3 +1,4 @@
+# Implements a random policy.
 import gymnasium as gym
 from gymnasium.wrappers import AtariPreprocessing, FrameStack
 
